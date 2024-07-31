@@ -1,4 +1,4 @@
-package com.interdimensionalmallet;
+package com.interdimensionalmallet.twtpthvtt;
 
 public class Main {
     public static void main(String[] args) {
