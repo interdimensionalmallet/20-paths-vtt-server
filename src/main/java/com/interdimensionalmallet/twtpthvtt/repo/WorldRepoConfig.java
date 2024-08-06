@@ -1,12 +1,10 @@
 package com.interdimensionalmallet.twtpthvtt.repo;
 
+import com.interdimensionalmallet.twtpthvtt.model.Link;
 import com.interdimensionalmallet.twtpthvtt.model.Resource;
 import com.interdimensionalmallet.twtpthvtt.model.Thing;
 import org.apache.ignite.*;
 import org.apache.ignite.configuration.CacheConfiguration;
-import org.apache.ignite.configuration.CollectionConfiguration;
-import org.apache.ignite.configuration.DataStorageConfiguration;
-import org.apache.ignite.configuration.IgniteConfiguration;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,20 +12,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class WorldRepoConfig {
 
-
-    @Bean
-    public IgniteConfiguration cfg() {
-        IgniteConfiguration cfg = new IgniteConfiguration();
-        DataStorageConfiguration storageCfg = new DataStorageConfiguration();
-        storageCfg.getDefaultDataRegionConfiguration().setPersistenceEnabled(true);
-        cfg.setDataStorageConfiguration(storageCfg);
-        return cfg;
-    }
-
-    @Bean
-    public Ignite ignite(IgniteConfiguration cfg) {
-        return Ignition.start(cfg);
-    }
 
     @Bean(name = "thingIDSequence")
     public IgniteAtomicSequence thingIDSequence(Ignite ignite) {
@@ -64,9 +48,22 @@ public class WorldRepoConfig {
         return ignite.getOrCreateCache(cfg);
     }
 
-    @Bean(name = "linkSet")
-    public IgniteSet<String> linkRepo(Ignite ignite) {
-        return ignite.set("linkSet", new CollectionConfiguration());
+    @Bean(name = "linkIDSequence")
+    public IgniteAtomicSequence linkIDSequence(Ignite ignite) {
+        return ignite.atomicSequence("linkIDSequence", 0, true);
     }
+
+    @Bean(name = "linkRepoConfig")
+    public CacheConfiguration<Long, Link> linkRepoConfig() {
+        CacheConfiguration<Long, Link> cfg = new CacheConfiguration<>("linkRepo");
+        cfg.setIndexedTypes(Long.class, Link.class);
+        return cfg;
+    }
+
+    @Bean(name = "linkRepo")
+    public IgniteCache<Long, Link> linkRepo(Ignite ignite, @Qualifier("linkRepoConfig") CacheConfiguration<Long, Link> cfg) {
+        return ignite.getOrCreateCache(cfg);
+    }
+
 
 }

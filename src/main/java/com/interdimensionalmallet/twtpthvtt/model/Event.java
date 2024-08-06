@@ -6,10 +6,18 @@ public interface Event {
 
     EventType eventType();
 
+    EventStyle eventStyle();
+
+    enum EventStyle {
+        ADD,
+        REMOVE
+    }
+
     enum EventType {
 
-        ADD,
-        REMOTE
+        THING,
+        RESOURCE,
+        LINK
 
 
     }

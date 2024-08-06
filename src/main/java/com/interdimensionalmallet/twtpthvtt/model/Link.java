@@ -2,14 +2,17 @@ package com.interdimensionalmallet.twtpthvtt.model;
 
 import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
-public class Link {
-
-    private Link() {
-        // no-op
-    }
-
-    public static String linkID(Long thing1, Long thing2) {
-        return Math.min(thing1, thing2) + "-" + Math.max(thing1, thing2);
+public record Link(Long id, @QuerySqlField Long sourceThingId, Long targetThingId) {
+    public Link {
+        if (id == null) {
+            throw new IllegalArgumentException("id cannot be null");
+        }
+        if (sourceThingId == null) {
+            throw new IllegalArgumentException("sourceThingId cannot be null");
+        }
+        if (targetThingId == null) {
+            throw new IllegalArgumentException("targetThingId cannot be null");
+        }
     }
 
 }

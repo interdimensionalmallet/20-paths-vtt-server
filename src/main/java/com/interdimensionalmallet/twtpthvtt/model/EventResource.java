@@ -1,12 +1,18 @@
 package com.interdimensionalmallet.twtpthvtt.model;
 
-public record EventResource(Long index, Event.EventType eventType, Long thingId, String resourceName, Integer resourceModifier) implements Event {
+public record EventResource(Long index, Event.EventType eventType, Event.EventStyle eventStyle, Long thingId, String resourceName, Integer resourceModifier) implements Event {
     public EventResource {
         if (index == null) {
             throw new IllegalArgumentException("index cannot be null");
         }
         if (eventType == null) {
             throw new IllegalArgumentException("type cannot be null");
+        }
+        if (eventType != Event.EventType.RESOURCE) {
+            throw new IllegalArgumentException("type must be RESOURCE");
+        }
+        if (eventStyle == null) {
+            throw new IllegalArgumentException("style cannot be null");
         }
         if (thingId == null) {
             throw new IllegalArgumentException("thingId cannot be null");
