@@ -2,7 +2,7 @@ package com.interdimensionalmallet.twtpthvtt.model;
 
 import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
-public record Resource(Long id, @QuerySqlField Long thingId, @QuerySqlField String name, Integer count) {
+public record Resource(Long id, @QuerySqlField(index = true, notNull = true) Long thingId, @QuerySqlField String name, Integer count) {
     public Resource {
         if (id == null) {
             throw new IllegalArgumentException("id cannot be null");

@@ -1,6 +1,8 @@
 package com.interdimensionalmallet.twtpthvtt.model;
 
-public record EventLink(Long index, Event.EventType eventType, Event.EventStyle eventStyle, Long sourceThingId, Long targetThingId) implements Event{
+import org.apache.ignite.cache.query.annotations.QuerySqlField;
+
+public record EventLink(@QuerySqlField(index = true, notNull = true, descending = true) Long index, Event.EventType eventType, Event.EventStyle eventStyle, Long sourceThingId, Long targetThingId) implements Event{
     public EventLink {
         if (index == null) {
             throw new IllegalArgumentException("index cannot be null");

@@ -22,7 +22,7 @@ public class EventRepoConfig {
     @Bean(name = "eventRepoConfig")
     public CacheConfiguration<Long, Event> eventRepoConfig() {
         CacheConfiguration<Long, Event> cfg = new CacheConfiguration<>("eventRepo");
-        cfg.setIndexedTypes(Long.class, Event.class, EventThing.class, EventResource.class, EventLink.class);
+        cfg.setIndexedTypes(Long.class, EventThing.class, EventResource.class, EventLink.class);
         return cfg;
     }
 
