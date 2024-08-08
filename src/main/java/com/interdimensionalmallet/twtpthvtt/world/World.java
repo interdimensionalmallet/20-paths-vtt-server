@@ -6,6 +6,4 @@ public interface World {
 
     Thing getThingById(Long id);
 
-    void saveThing(Thing thing);
-
 }

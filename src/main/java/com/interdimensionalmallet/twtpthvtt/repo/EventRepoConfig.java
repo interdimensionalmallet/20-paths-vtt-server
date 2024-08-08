@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Bean;
 
 public class EventRepoConfig {
 
-    @Bean
+    @Bean("futureEvents")
     public IgniteQueue<Event> futureEvents(Ignite ignite) {
         return ignite.queue("futureEvents", 0, new CollectionConfiguration());
     }

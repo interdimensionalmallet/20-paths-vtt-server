@@ -8,9 +8,11 @@ public interface Event {
 
     EventStyle eventStyle();
 
+    Event withIndex(Long index);
+
     enum EventStyle {
-        ADD,
-        REMOVE
+        CREATE,
+        DELETE
     }
 
     enum EventType {

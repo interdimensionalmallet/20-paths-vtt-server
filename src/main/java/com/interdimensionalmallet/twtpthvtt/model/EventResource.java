@@ -4,9 +4,6 @@ import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
 public record EventResource(@QuerySqlField(index = true, notNull = true, descending = true) Long index, Event.EventType eventType, Event.EventStyle eventStyle, Long thingId, String resourceName, Integer resourceModifier) implements Event {
     public EventResource {
-        if (index == null) {
-            throw new IllegalArgumentException("index cannot be null");
-        }
         if (eventType == null) {
             throw new IllegalArgumentException("type cannot be null");
         }
@@ -28,5 +25,9 @@ public record EventResource(@QuerySqlField(index = true, notNull = true, descend
         if (resourceModifier <= 0) {
             throw new IllegalArgumentException("resourceModifier must be greater than 0");
         }
+    }
+
+    public Event withIndex(Long index) {
+        return new EventResource(index, eventType, eventStyle, thingId, resourceName, resourceModifier);
     }
 }
