@@ -1,10 +1,8 @@
 package com.interdimensionalmallet.twtpthvtt.model;
 
-import org.apache.ignite.cache.query.annotations.QuerySqlField;
-
 import java.util.List;
 
-public record Event(@QuerySqlField(index = true, notNull = true, descending = true) Long index, EventType eventType, EventStyle eventStyle,
+public record Event(Long index, EventType eventType, EventStyle eventStyle,
                     Long sourceThingId, Long targetThingId,
                     Long thingId,
                     String resourceName, Integer resourceModifier,
