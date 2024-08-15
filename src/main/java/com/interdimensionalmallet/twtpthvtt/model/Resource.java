@@ -1,6 +1,8 @@
 package com.interdimensionalmallet.twtpthvtt.model;
 
-public record Resource(Long id, Long thingId, String name, Integer count) {
+import org.springframework.data.annotation.Id;
+
+public record Resource(@Id Long id, Long thingId, String name, Integer count) {
     public Resource {
         if (thingId == null) {
             throw new IllegalArgumentException("thingId cannot be null");
