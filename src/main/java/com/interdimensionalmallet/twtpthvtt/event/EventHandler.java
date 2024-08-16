@@ -8,8 +8,6 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
-import java.util.function.Function;
-
 @Component
 public class EventHandler {
 
@@ -19,15 +17,7 @@ public class EventHandler {
         this.repos = repos;
     }
 
-    <T> Mono<T> inTransaction(Function<Mono<Void>, Mono<T>> transformer) {
-        return Mono.from(repos.databaseClient().getConnectionFactory().create())
-                .flatMap(connection -> Mono.from(connection.beginTransaction())
-                        .transform(transformer)
-                        .transform(result -> Mono.from(connection.commitTransaction()).then(result))
-                        .onErrorResume(e -> Mono.from(connection.rollbackTransaction()).then(Mono.error(e))));
-    }
-
-    Mono<Event> pushEvent(Mono<Void> transaction, Event event) {
+    public Mono<Event> pushEvent(Event event) {
         Events events = repos.events();
         R2dbcEntityTemplate entityTemplate = repos.entityTemplate();
 
@@ -61,23 +51,13 @@ public class EventHandler {
                 .map(Tuple2::getT2)
                 .flatMap(id -> events.setPointerId(Event.EventPointers.QUEUE_HEAD, id));
 
-        Mono<Event> result = eventWithId
+        return eventWithId
                 .then(Mono.when(updateTailEvent, updateTailPointer, updateHeadPointer))
                 .then(eventWithId);
-
-
-
-        return transaction.then(result);
     }
 
-
-    public Mono<Event> pushEvent(Event event) {
-        return inTransaction(transaction -> pushEvent(transaction, event));
-    }
-
-    Mono<Event> popEvent(Mono<Void> transaction) {
+    public Mono<Event> popEventQueue() {
         Events events = repos.events();
-        R2dbcEntityTemplate entityTemplate = repos.entityTemplate();
 
         Mono<Long> queueHead = events.getPointerId(Event.EventPointers.QUEUE_HEAD).cache();
 
@@ -101,12 +81,8 @@ public class EventHandler {
 
 
 
-        return transaction.then(Mono.when(updateHeadPointer, updateTailPointer, updateCurrentPointer)
-                .then(headEvent));
-    }
-
-    public Mono<Event> popEventQueue() {
-        return inTransaction(this::popEvent);
+        return Mono.when(updateHeadPointer, updateTailPointer, updateCurrentPointer)
+                .then(headEvent);
     }
 
 }
