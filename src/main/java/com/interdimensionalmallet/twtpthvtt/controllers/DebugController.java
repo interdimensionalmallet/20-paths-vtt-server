@@ -35,6 +35,13 @@ public class DebugController {
                 .flatMap(eventHandler::pushEvent);
     }
 
+    @PutMapping("/debug/things")
+    public Mono<Event> createThingRemoveEvent(@RequestBody Thing thing) {
+        return Mono.justOrEmpty(thing.id())
+                .map(id -> Event.thingEvent(Event.EventType.REMOVE, id, thing.name()))
+                .flatMap(eventHandler::pushEvent);
+    }
+
     @GetMapping("/debug/links")
     public Flux<Link> getLinks() {
         return repos.links().findAll();
@@ -43,6 +50,11 @@ public class DebugController {
     @PostMapping("/debug/links")
     public Mono<Event> createLinkEvent(@RequestBody Link link) {
         return eventHandler.pushEvent(Event.linkEvent(Event.EventType.CREATE, link.sourceThingId(), link.targetThingId()));
+    }
+
+    @PutMapping("/debug/links")
+    public Mono<Event> createLinkRemoveEvent(@RequestBody Link link) {
+        return eventHandler.pushEvent(Event.linkEvent(Event.EventType.REMOVE, link.sourceThingId(), link.targetThingId()));
     }
 
     @GetMapping("/debug/resources")
@@ -55,6 +67,13 @@ public class DebugController {
         return Mono.justOrEmpty(resource.id())
                 .switchIfEmpty(repos.resources().nextId())
                 .map(id -> Event.resourceEvent(Event.EventType.CREATE, id, resource.thingId(), resource.name(), resource.count()))
+                .flatMap(eventHandler::pushEvent);
+    }
+
+    @PutMapping("/debug/resources")
+    public Mono<Event> createResourceRemoveEvent(@RequestBody Resource resource) {
+        return Mono.justOrEmpty(resource.id())
+                .map(id -> Event.resourceEvent(Event.EventType.REMOVE, id, resource.thingId(), resource.name(), resource.count()))
                 .flatMap(eventHandler::pushEvent);
     }
 

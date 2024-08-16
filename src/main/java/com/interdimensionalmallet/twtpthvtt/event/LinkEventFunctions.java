@@ -3,7 +3,6 @@ package com.interdimensionalmallet.twtpthvtt.event;
 import com.interdimensionalmallet.twtpthvtt.db.Repos;
 import com.interdimensionalmallet.twtpthvtt.model.Event;
 import com.interdimensionalmallet.twtpthvtt.model.Link;
-import com.interdimensionalmallet.twtpthvtt.model.LinkId;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -16,8 +15,8 @@ public class LinkEventFunctions implements EventHandlerFunctionSupplier<Link> {
         this.repos = repos;
     }
 
-    public Mono<Link> forwardCreateHandle(Event event) {
-        Link newLink = new Link(event.thingId(), event.targetThingId(), false);
+    public Mono<Link> addLink(Event event) {
+        Link newLink = new Link(event.thingId(), event.targetThingId());
         Link other = newLink.reverse();
         return Mono.when(repos.entityTemplate().insert(newLink), repos.entityTemplate().insert(other))
                 .thenReturn(newLink);
@@ -27,7 +26,7 @@ public class LinkEventFunctions implements EventHandlerFunctionSupplier<Link> {
         return existingLink.flatMap(link -> repos.links().deleteByKey(link.sourceThingId(), link.targetThingId())).then();
     }
 
-    public Mono<Link> reverseCreateHandle(Event event) {
+    public Mono<Link> removeLink(Event event) {
         Mono<Link> existingLink = repos.links().findByKey(event.thingId(), event.targetThingId()).cache();
         Mono<Link> reverseLink = existingLink.map(Link::reverse);
 
@@ -35,35 +34,15 @@ public class LinkEventFunctions implements EventHandlerFunctionSupplier<Link> {
                 .then(existingLink);
     }
 
-    public Mono<Link> forwardRemoveHandle(Event event) {
-        return repos.links().findById(new LinkId(event.thingId(), event.targetThingId()))
-                .flatMap(link ->
-                        Mono.when(
-                                repos.entityTemplate().update(link.withDeleted(true)),
-                                repos.entityTemplate().update(link.reverse().withDeleted(true))
-                        ).thenReturn(link)
-                );
-    }
-
-    public Mono<Link> reverseRemoveHandle(Event event) {
-        return repos.links().findById(new LinkId(event.thingId(), event.targetThingId()))
-                .flatMap(link ->
-                        Mono.when(
-                                repos.entityTemplate().update(link.withDeleted(false)),
-                                repos.entityTemplate().update(link.reverse().withDeleted(false))
-                        ).thenReturn(link)
-                );
-    }
-
     public EventHandlerFunction<Link> getHandlerFunction(Event.EventType eventType, Event.EventDirection eventDirection) {
         return switch(eventType){
             case CREATE -> switch(eventDirection){
-                case FORWARD -> this::forwardCreateHandle;
-                case REVERSE -> this::reverseCreateHandle;
+                case FORWARD -> this::addLink;
+                case REVERSE -> this::removeLink;
             };
             case REMOVE -> switch(eventDirection){
-                case FORWARD -> this::forwardRemoveHandle;
-                case REVERSE -> this::reverseRemoveHandle;
+                case FORWARD -> this::removeLink;
+                case REVERSE -> this::addLink;
             };
         };
     }
