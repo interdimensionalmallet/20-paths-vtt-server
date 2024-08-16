@@ -3,6 +3,7 @@ package com.interdimensionalmallet.twtpthvtt.event;
 import com.interdimensionalmallet.twtpthvtt.db.Events;
 import com.interdimensionalmallet.twtpthvtt.db.Repos;
 import com.interdimensionalmallet.twtpthvtt.model.Event;
+import com.interdimensionalmallet.twtpthvtt.model.WorldItem;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -12,9 +13,11 @@ import reactor.util.function.Tuple2;
 public class EventHandler {
 
     private final Repos repos;
+    private final EventHandlerFunctions eventHandlerFunctions;
 
-    public EventHandler(Repos repos) {
+    public EventHandler(Repos repos, EventHandlerFunctions eventHandlerFunctions) {
         this.repos = repos;
+        this.eventHandlerFunctions = eventHandlerFunctions;
     }
 
     public Mono<Event> pushEvent(Event event) {
@@ -24,12 +27,18 @@ public class EventHandler {
         Mono<Long> nextEventId = events.nextId().cache();
 
         Mono<Long> queueTail = events.getPointerId(Event.EventPointers.QUEUE_TAIL).cache();
+        Mono<Long> current = events.getPointerId(Event.EventPointers.CURRENT).cache();
+
+        Mono<Long> newPrevious = queueTail
+                .filter(tail -> tail != -1L)
+                .switchIfEmpty(current)
+                .cache();
 
 
         Mono<Event> eventWithId = nextEventId
                 .map(event::withId)
                 .map(evt -> evt.withNextId(-1L))
-                .zipWith(queueTail, Event::withPreviousId)
+                .zipWith(newPrevious, Event::withPreviousId)
                 .flatMap(entityTemplate::insert)
                 .cache();
 
@@ -42,6 +51,14 @@ public class EventHandler {
                 .then();
 
 
+        Mono<Void> updateCurrentEvent = Mono.zip(queueTail, current)
+                .filter(tuple -> tuple.getT1() == -1L && tuple.getT2() != -1)
+                .map(Tuple2::getT2)
+                .flatMap(events::findById)
+                .zipWith(nextEventId, Event::withNextId)
+                .flatMap(entityTemplate::update)
+                .then();
+
         Mono<Void> updateTailPointer = nextEventId
                 .flatMap(id -> events.setPointerId(Event.EventPointers.QUEUE_TAIL, id));
 
@@ -52,11 +69,11 @@ public class EventHandler {
                 .flatMap(id -> events.setPointerId(Event.EventPointers.QUEUE_HEAD, id));
 
         return eventWithId
-                .then(Mono.when(updateTailEvent, updateTailPointer, updateHeadPointer))
+                .then(Mono.when(updateCurrentEvent, updateTailEvent, updateTailPointer, updateHeadPointer))
                 .then(eventWithId);
     }
 
-    public Mono<Event> popEventQueue() {
+    public Mono<? extends WorldItem> popEventQueue() {
         Events events = repos.events();
 
         Mono<Long> queueHead = events.getPointerId(Event.EventPointers.QUEUE_HEAD).cache();
@@ -82,7 +99,8 @@ public class EventHandler {
 
 
         return Mono.when(updateHeadPointer, updateTailPointer, updateCurrentPointer)
-                .then(headEvent);
+                .then(headEvent)
+                .flatMap(evt -> eventHandlerFunctions.getHandlerFunction(evt, Event.EventDirection.FORWARD).apply(evt));
     }
 
 }

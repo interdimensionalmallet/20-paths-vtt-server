@@ -4,10 +4,7 @@ import com.interdimensionalmallet.twtpthvtt.db.Links;
 import com.interdimensionalmallet.twtpthvtt.db.Repos;
 import com.interdimensionalmallet.twtpthvtt.db.Things;
 import com.interdimensionalmallet.twtpthvtt.event.EventHandler;
-import com.interdimensionalmallet.twtpthvtt.model.Event;
-import com.interdimensionalmallet.twtpthvtt.model.Link;
-import com.interdimensionalmallet.twtpthvtt.model.Resource;
-import com.interdimensionalmallet.twtpthvtt.model.Thing;
+import com.interdimensionalmallet.twtpthvtt.model.*;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -31,14 +28,33 @@ public class DebugController {
         return repos.things().findAll();
     }
 
+    @PostMapping("/debug/things")
+    public Mono<Event> createThingEvent(@RequestBody Thing thing) {
+        return repos.things().nextId()
+                .map(id -> Event.thingEvent(Event.EventType.CREATE, id, thing.name()))
+                .flatMap(eventHandler::pushEvent);
+    }
+
     @GetMapping("/debug/links")
     public Flux<Link> getLinks() {
         return repos.links().findAll();
     }
 
+    @PostMapping("/debug/links")
+    public Mono<Event> createLinkEvent(@RequestBody Link link) {
+        return eventHandler.pushEvent(Event.linkEvent(Event.EventType.CREATE, link.linkId().sourceThingId(), link.linkId().targetThingId()));
+    }
+
     @GetMapping("/debug/resources")
     public Flux<Resource> getResources() {
         return repos.resources().findAll();
+    }
+
+    @PostMapping("/debug/resources")
+    public Mono<Event> createResourceEvent(@RequestBody Resource resource) {
+        return repos.resources().nextId()
+                .map(id -> Event.resourceEvent(Event.EventType.CREATE, id, resource.thingId(), resource.name(), resource.count()))
+                .flatMap(eventHandler::pushEvent);
     }
 
     @GetMapping("/debug/events")
@@ -65,7 +81,7 @@ public class DebugController {
     }
 
     @DeleteMapping("/debug/events")
-    public Mono<Event> popEvent() {
+    public Mono<? extends WorldItem> popEvent() {
         return eventHandler.popEventQueue();
     }
 
