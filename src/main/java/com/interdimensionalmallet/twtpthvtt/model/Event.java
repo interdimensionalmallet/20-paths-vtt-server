@@ -4,7 +4,7 @@ import org.springframework.data.annotation.Id;
 
 public record Event(@Id Long id,
                     Long previousId, Long nextId,
-                    EventType eventType, EventStyle eventStyle,
+                    WorldItem.Type worldItemType, EventType eventType,
                     Long thingId, String thingName,
                     Long linkId, Long targetThingId,
                     Long resourceId, String resourceName, Integer resourceModifier) {
@@ -15,33 +15,31 @@ public record Event(@Id Long id,
         QUEUE_TAIL
     }
 
-    public enum EventStyle {
-        CREATE,
-        DELETE
-    }
-
     public enum EventType {
-
-        THING,
-        RESOURCE,
-        LINK
-
+        CREATE,
+        REMOVE
     }
 
-    static Event thingEvent(EventStyle eventStyle, Long thingId, String thingName) {
-        return new Event(null, null, null, EventType.THING, eventStyle, thingId, thingName, null, null, null, null, null);
+    public enum EventDirection {
+        FORWARD,
+        REVERSE
     }
 
-    static Event linkEvent(EventStyle eventStyle, Long linkId, Long sourceThingId, Long targetThingId) {
-        return new Event(null, null, null, EventType.LINK, eventStyle, sourceThingId, null, linkId, targetThingId, null, null, null);
+
+    static Event thingEvent(EventType eventType, Long thingId, String thingName) {
+        return new Event(null, null, null, WorldItem.Type.THING, eventType, thingId, thingName, null, null, null, null, null);
     }
 
-    static Event resourceEvent(EventStyle eventStyle, Long resourceId, Long thingId, String resourceName, Integer resourceModifier) {
-        return new Event(null, null, null, EventType.RESOURCE, eventStyle, thingId, null, null, null, resourceId, resourceName, resourceModifier);
+    static Event linkEvent(EventType eventType, Long linkId, Long sourceThingId, Long targetThingId) {
+        return new Event(null, null, null, WorldItem.Type.LINK, eventType, sourceThingId, null, linkId, targetThingId, null, null, null);
+    }
+
+    static Event resourceEvent(EventType eventType, Long resourceId, Long thingId, String resourceName, Integer resourceModifier) {
+        return new Event(null, null, null, WorldItem.Type.RESOURCE, eventType, thingId, null, null, null, resourceId, resourceName, resourceModifier);
     }
 
     public Event withId(Long id) {
-        return new Event(id, previousId, nextId, eventType, eventStyle, thingId, thingName, linkId, targetThingId, resourceId, resourceName, resourceModifier);
+        return new Event(id, previousId, nextId, worldItemType, eventType, thingId, thingName, linkId, targetThingId, resourceId, resourceName, resourceModifier);
     }
 
     public Event withNextId(Long nextId) {
@@ -53,11 +51,11 @@ public record Event(@Id Long id,
     }
 
     public Event withChains(Long previousId, Long nextId) {
-        return new Event(id, previousId, nextId, eventType, eventStyle, thingId, thingName, linkId, targetThingId, resourceId, resourceName, resourceModifier);
+        return new Event(id, previousId, nextId, worldItemType, eventType, thingId, thingName, linkId, targetThingId, resourceId, resourceName, resourceModifier);
     }
 
     public Event withIdAndChains(Long id, Long previousId, Long nextId) {
-        return new Event(id, previousId, nextId, eventType, eventStyle, thingId, thingName, linkId, targetThingId, resourceId, resourceName, resourceModifier);
+        return new Event(id, previousId, nextId, worldItemType, eventType, thingId, thingName, linkId, targetThingId, resourceId, resourceName, resourceModifier);
     }
 
 

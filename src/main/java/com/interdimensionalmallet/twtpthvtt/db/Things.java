@@ -11,4 +11,6 @@ public interface Things extends ReactiveCrudRepository<Thing, Long> {
 
     @Query("SELECT NEXT VALUE FOR THING_ID_SEQ")
     Mono<Long> nextId();
+
+
 }

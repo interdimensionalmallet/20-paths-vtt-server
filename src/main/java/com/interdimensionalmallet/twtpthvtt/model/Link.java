@@ -2,23 +2,24 @@ package com.interdimensionalmallet.twtpthvtt.model;
 
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Embedded;
 
-public record Link(@Id Long id, Long sourceThingId, Long targetThingId) {
+public record Link(@Id @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) LinkId linkId, Boolean deleted) implements WorldItem {
     public Link {
-        if (sourceThingId == null) {
-            throw new IllegalArgumentException("sourceThingId cannot be null");
+        if (linkId == null) {
+            throw new IllegalArgumentException("linkId cannot be null");
         }
-        if (targetThingId == null) {
-            throw new IllegalArgumentException("targetThingId cannot be null");
-        }
-    }
-
-    public Link withId(Long id) {
-        return new Link(id, sourceThingId, targetThingId);
     }
 
     public Link reverse() {
-        return new Link(id, targetThingId, sourceThingId);
+        return new Link(new LinkId(linkId().targetThingId(), linkId().sourceThingId()), deleted);
     }
 
+    public WorldItem.Type type() {
+        return WorldItem.Type.LINK;
+    }
+
+    public Link withDeleted(Boolean deleted) {
+        return new Link(linkId, deleted);
+    }
 }
