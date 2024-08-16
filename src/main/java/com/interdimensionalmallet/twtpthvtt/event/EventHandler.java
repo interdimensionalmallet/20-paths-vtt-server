@@ -103,4 +103,33 @@ public class EventHandler {
                 .flatMap(evt -> eventHandlerFunctions.getHandlerFunction(evt, Event.EventDirection.FORWARD).apply(evt));
     }
 
+    public Mono<? extends WorldItem> reverseEvent() {
+        Events events = repos.events();
+
+        Mono<Long> current = events.getPointerId(Event.EventPointers.CURRENT).cache();
+        Mono<Long> queueTail = events.getPointerId(Event.EventPointers.QUEUE_TAIL).cache();
+
+        Mono<Event> currentEvent = current
+                .filter(id -> id != -1L)
+                .flatMap(events::findById)
+                .cache();
+
+        Mono<Void> updateCurrentPointer = currentEvent
+                .map(Event::previousId)
+                .flatMap(id -> events.setPointerId(Event.EventPointers.CURRENT, id));
+
+        Mono<Void> updateHeadPointer = currentEvent
+                .map(Event::id)
+                .flatMap(id -> events.setPointerId(Event.EventPointers.QUEUE_HEAD, id));
+
+        Mono<Void> updateTailPointer = queueTail
+                .filter(id -> id == -1L)
+                .flatMap(id -> current)
+                .flatMap(id -> events.setPointerId(Event.EventPointers.QUEUE_TAIL, id));
+
+        return Mono.when(updateCurrentPointer, updateHeadPointer, updateTailPointer)
+                .then(currentEvent)
+                .flatMap(evt -> eventHandlerFunctions.getHandlerFunction(evt, Event.EventDirection.REVERSE).apply(evt));
+    }
+
 }

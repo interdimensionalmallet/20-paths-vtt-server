@@ -85,4 +85,9 @@ public class DebugController {
         return eventHandler.popEventQueue();
     }
 
+    @DeleteMapping("/debug/events/reverse")
+    public Mono<? extends WorldItem> popEventReverse() {
+        return eventHandler.reverseEvent();
+    }
+
 }
