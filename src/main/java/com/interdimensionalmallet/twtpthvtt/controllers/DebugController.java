@@ -9,10 +9,7 @@ import com.interdimensionalmallet.twtpthvtt.model.Link;
 import com.interdimensionalmallet.twtpthvtt.model.Resource;
 import com.interdimensionalmallet.twtpthvtt.model.Thing;
 import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -65,6 +62,11 @@ public class DebugController {
     @PostMapping("/debug/events")
     public Mono<Event> createEvent(@RequestBody Event event) {
         return eventHandler.pushEvent(event);
+    }
+
+    @DeleteMapping("/debug/events")
+    public Mono<Event> popEvent() {
+        return eventHandler.popEventQueue();
     }
 
 }
