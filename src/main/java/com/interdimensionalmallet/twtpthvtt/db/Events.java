@@ -12,4 +12,10 @@ public interface Events extends R2dbcRepository<Event, Long> {
     @Query("SELECT NEXT VALUE FOR EVENT_ID_SEQ")
     Mono<Long> nextId();
 
+    @Query("SELECT EVENT_ID FROM EVENT_POINTERS WHERE POINTER_NAME = :pointerName")
+    Mono<Long> getPointerId(Event.EventPointers pointerName);
+
+    @Query("UPDATE EVENT_POINTERS SET EVENT_ID = :eventId WHERE POINTER_NAME = :pointerName")
+    Mono<Void> setPointerId(Event.EventPointers pointerName, Long eventId);
+
 }
