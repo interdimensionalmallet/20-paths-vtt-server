@@ -23,4 +23,8 @@ public record Resource(@Id Long id, Long thingId, String name, Integer count, Bo
         return new Resource(id, thingId, name, count, deleted);
     }
 
+    public Resource withModifier(Integer modifier) {
+        return new Resource(id, thingId, name, count + modifier, deleted);
+    }
+
 }

@@ -42,7 +42,7 @@ public class DebugController {
 
     @PostMapping("/debug/links")
     public Mono<Event> createLinkEvent(@RequestBody Link link) {
-        return eventHandler.pushEvent(Event.linkEvent(Event.EventType.CREATE, link.linkId().sourceThingId(), link.linkId().targetThingId()));
+        return eventHandler.pushEvent(Event.linkEvent(Event.EventType.CREATE, link.sourceThingId(), link.targetThingId()));
     }
 
     @GetMapping("/debug/resources")
@@ -52,7 +52,8 @@ public class DebugController {
 
     @PostMapping("/debug/resources")
     public Mono<Event> createResourceEvent(@RequestBody Resource resource) {
-        return repos.resources().nextId()
+        return Mono.justOrEmpty(resource.id())
+                .switchIfEmpty(repos.resources().nextId())
                 .map(id -> Event.resourceEvent(Event.EventType.CREATE, id, resource.thingId(), resource.name(), resource.count()))
                 .flatMap(eventHandler::pushEvent);
     }

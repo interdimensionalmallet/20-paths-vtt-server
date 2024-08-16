@@ -17,16 +17,22 @@ public class LinkEventFunctions implements EventHandlerFunctionSupplier<Link> {
     }
 
     public Mono<Link> forwardCreateHandle(Event event) {
-        Link newLink = new Link(new LinkId(event.thingId(), event.targetThingId()), false);
+        Link newLink = new Link(event.thingId(), event.targetThingId(), false);
         Link other = newLink.reverse();
         return Mono.when(repos.entityTemplate().insert(newLink), repos.entityTemplate().insert(other))
                 .thenReturn(newLink);
     }
 
+    private Mono<Void> deleteByKey(Mono<Link> existingLink) {
+        return existingLink.flatMap(link -> repos.links().deleteByKey(link.sourceThingId(), link.targetThingId())).then();
+    }
+
     public Mono<Link> reverseCreateHandle(Event event) {
-        return repos.links().findById(new LinkId(event.thingId(), event.targetThingId()))
-                .flatMap(link -> Mono.when(repos.entityTemplate().delete(link), repos.entityTemplate().delete(link.reverse()))
-                        .thenReturn(link));
+        Mono<Link> existingLink = repos.links().findByKey(event.thingId(), event.targetThingId()).cache();
+        Mono<Link> reverseLink = existingLink.map(Link::reverse);
+
+        return Mono.when(deleteByKey(existingLink), deleteByKey(reverseLink))
+                .then(existingLink);
     }
 
     public Mono<Link> forwardRemoveHandle(Event event) {

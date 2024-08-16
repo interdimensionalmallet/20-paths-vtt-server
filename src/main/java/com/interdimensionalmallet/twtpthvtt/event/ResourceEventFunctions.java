@@ -18,14 +18,27 @@ public class ResourceEventFunctions implements EventHandlerFunctionSupplier<Reso
     }
 
     public Mono<Resource> forwardCreateHandle(Event event) {
-        Resource newResource = new Resource(event.resourceId(), event.thingId(), event.resourceName(), event.resourceModifier(), false);
-        return repos.entityTemplate().insert(newResource);
+        return repos.resources()
+                .findById(event.resourceId())
+                .map(rsc -> rsc.withModifier(event.resourceModifier()))
+                .flatMap(repos.entityTemplate()::update)
+                .switchIfEmpty(Mono.defer(() ->
+                            Mono.just(new Resource(event.resourceId(), event.thingId(), event.resourceName(), event.resourceModifier(), false))
+                                    .flatMap(repos.entityTemplate()::insert)
+                        )
+                );
     }
 
     public Mono<Resource> reverseCreateHandle(Event event) {
-        return repos.resources().findById(event.resourceId())
-                .flatMap(resource -> repos.entityTemplate().delete(resource)
-                        .thenReturn(resource));
+        Mono<Resource> resource = repos.resources().findById(event.resourceId()).cache();
+        return resource
+                .map(rsc -> rsc.withModifier(-1 * event.resourceModifier()))
+                .filter(rsc -> rsc.count() > 0)
+                .flatMap(repos.entityTemplate()::update)
+                .switchIfEmpty(Mono.defer(() ->
+                            resource.flatMap(repos.entityTemplate()::delete)
+                        )
+                );
     }
 
     public Mono<Resource> forwardRemoveHandle(Event event) {
