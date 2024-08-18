@@ -1,8 +1,19 @@
 package com.interdimensionalmallet.twtpthvtt.model;
 
-public record Thing(Long id, String name) {
+import org.springframework.data.annotation.Id;
+
+public record Thing(@Id Long id, String name, Boolean deleted) implements WorldItem{
 
     public Thing withId(Long id) {
-        return new Thing(id, name);
+        return new Thing(id, name, deleted);
     }
+
+    public Thing withDeleted(Boolean deleted) {
+        return new Thing(id, name, deleted);
+    }
+
+    public WorldItem.Type type() {
+        return WorldItem.Type.THING;
+    }
+
 }
