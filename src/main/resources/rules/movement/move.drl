@@ -1,0 +1,10 @@
+package rules.movement
+
+rule "Example Rule"
+    when
+        // Add your conditions here
+        $fact: FactClass($property: propertyValue)
+    then
+        // Add your actions here
+        System.out.println("Property value: " + $property);
+end
