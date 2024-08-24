@@ -1,10 +1,20 @@
-package rules.movement
+package rules.movement;
 
-rule "Example Rule"
+import com.interdimensionalmallet.twtpthvtt.model.*;
+
+dialect "mvel";
+
+rule "Movement - Select Movement Direction"
     when
-        // Add your conditions here
-        $fact: FactClass($property: propertyValue)
+        $thing: Thing()
+        $resource: Resource(thingId == $thing.id, name == "movement_spaces", count > 0)
+        $link: Link(sourceThingId == $thing.id)
+        $currentTerrain: Thing(id == $link.targetThingId)
+        $currentTerrainResource: Resource(thingId == $currentTerrain.id, name == "tag:terrain")
+        $currentTerrainLink: Link(sourceThingId == $currentTerrain.id)
+        $otherTerrain: Thing(id == $currentTerrainLink.targetThingId)
+        $otherTerrainResource: Resource(thingId == $otherTerrain.id, name == "tag:terrain")
     then
-        // Add your actions here
-        System.out.println("Property value: " + $property);
+        System.out.println("Movement - Select Movement Direction");
+        
 end
