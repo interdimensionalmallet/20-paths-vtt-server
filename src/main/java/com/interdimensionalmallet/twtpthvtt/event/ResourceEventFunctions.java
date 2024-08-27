@@ -3,6 +3,7 @@ package com.interdimensionalmallet.twtpthvtt.event;
 import com.interdimensionalmallet.twtpthvtt.db.Repos;
 import com.interdimensionalmallet.twtpthvtt.model.Event;
 import com.interdimensionalmallet.twtpthvtt.model.Resource;
+import com.interdimensionalmallet.twtpthvtt.topics.Topics;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -12,19 +13,21 @@ import java.util.Map;
 public class ResourceEventFunctions implements EventHandlerFunctionSupplier<Resource> {
 
     private final Repos repos;
+    private final Topics topics;
 
-    public ResourceEventFunctions(Repos repos) {
+    public ResourceEventFunctions(Repos repos, Topics topics) {
         this.repos = repos;
+        this.topics = topics;
     }
 
     public Mono<Resource> forwardCreateHandle(Event event) {
         return repos.resources()
                 .findById(event.resourceId())
                 .map(rsc -> rsc.withModifier(event.resourceModifier()))
-                .flatMap(repos.entityTemplate()::update)
+                .transform(Topics.update(topics.resourceTopic()))
                 .switchIfEmpty(Mono.defer(() ->
                             Mono.just(new Resource(event.resourceId(), event.thingId(), event.resourceName(), event.resourceModifier(), false))
-                                    .flatMap(repos.entityTemplate()::insert)
+                                    .transform(Topics.create(topics.resourceTopic()))
                         )
                 );
     }
@@ -34,21 +37,23 @@ public class ResourceEventFunctions implements EventHandlerFunctionSupplier<Reso
         return resource
                 .map(rsc -> rsc.withModifier(-1 * event.resourceModifier()))
                 .filter(rsc -> rsc.count() > 0)
-                .flatMap(repos.entityTemplate()::update)
+                .transform(Topics.update(topics.resourceTopic()))
                 .switchIfEmpty(Mono.defer(() ->
-                            resource.flatMap(repos.entityTemplate()::delete)
+                            resource.transform(Topics.delete(topics.resourceTopic()))
                         )
                 );
     }
 
     public Mono<Resource> forwardRemoveHandle(Event event) {
         return repos.resources().findById(event.resourceId())
-                .flatMap(resource -> repos.entityTemplate().update(resource.withDeleted(true)));
+                .map(resource -> resource.withDeleted(true))
+                .transform(Topics.update(topics.resourceTopic()));
     }
 
     public Mono<Resource> reverseRemoveHandle(Event event) {
         return repos.resources().findById(event.resourceId())
-                .flatMap(resource -> repos.entityTemplate().update(resource.withDeleted(false)));
+                .map(resource -> resource.withDeleted(false))
+                .transform(Topics.update(topics.resourceTopic()));
     }
 
     @Override

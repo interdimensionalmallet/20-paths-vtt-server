@@ -3,6 +3,7 @@ package com.interdimensionalmallet.twtpthvtt.event;
 import com.interdimensionalmallet.twtpthvtt.db.Repos;
 import com.interdimensionalmallet.twtpthvtt.model.Event;
 import com.interdimensionalmallet.twtpthvtt.model.Thing;
+import com.interdimensionalmallet.twtpthvtt.topics.Topics;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -13,30 +14,33 @@ import java.util.Map;
 public class ThingEventFunctions implements EventHandlerFunctionSupplier<Thing> {
 
     private final Repos repos;
+    private final Topics topics;
 
-    public ThingEventFunctions(Repos repos) {
+    public ThingEventFunctions(Repos repos, Topics topics) {
         this.repos = repos;
+        this.topics = topics;
     }
 
     public Mono<Thing> forwardCreateHandle(Event event) {
         Thing newThing = new Thing(event.thingId(), event.thingName(), false);
-        return repos.entityTemplate().insert(newThing);
+        return Mono.just(newThing).transform(Topics.create(topics.thingTopic()));
     }
 
     public Mono<Thing> reverseCreateHandle(Event event) {
         return repos.things().findById(event.thingId())
-                .flatMap(thing -> repos.entityTemplate().delete(thing)
-                        .thenReturn(thing));
+                .transform(Topics.delete(topics.thingTopic()));
     }
 
     public Mono<Thing> forwardRemoveHandle(Event event) {
         return repos.things().findById(event.thingId())
-                .flatMap(thing -> repos.entityTemplate().update(thing.withDeleted(true)));
+                .map(thing -> thing.withDeleted(true))
+                .transform(Topics.update(topics.thingTopic()));
     }
 
     public Mono<Thing> reverseRemoveHandle(Event event) {
         return repos.things().findById(event.thingId())
-                .flatMap(thing -> repos.entityTemplate().update(thing.withDeleted(false)));
+                .map(thing -> thing.withDeleted(false))
+                .transform(Topics.update(topics.thingTopic()));
     }
 
     @Override

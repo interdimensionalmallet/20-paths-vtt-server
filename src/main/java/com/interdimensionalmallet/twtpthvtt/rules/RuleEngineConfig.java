@@ -60,4 +60,9 @@ public class RuleEngineConfig {
         kb.buildAll();
         return KieServices.Factory.get().newKieContainer(kb.getKieModule().getReleaseId());
    }
+
+   @Bean
+    public KieSession createSession(KieContainer kieContainer) {
+        return kieContainer.newKieSession();
+    }
 }

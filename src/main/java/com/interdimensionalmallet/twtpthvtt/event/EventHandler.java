@@ -5,28 +5,28 @@ import com.interdimensionalmallet.twtpthvtt.db.Repos;
 import com.interdimensionalmallet.twtpthvtt.model.Event;
 import com.interdimensionalmallet.twtpthvtt.model.Message;
 import com.interdimensionalmallet.twtpthvtt.model.WorldItem;
-import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import com.interdimensionalmallet.twtpthvtt.topics.Topic;
+import com.interdimensionalmallet.twtpthvtt.topics.Topics;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
 import reactor.util.function.Tuple2;
 
 @Component
 public class EventHandler {
 
     private final Repos repos;
+    private final Topics topics;
     private final EventHandlerFunctions eventHandlerFunctions;
-    private final Sinks.Many<Message<Event>> eventTopic;
 
-    public EventHandler(Repos repos, EventHandlerFunctions eventHandlerFunctions, Sinks.Many<Message<Event>> eventTopic) {
+    public EventHandler(Repos repos, EventHandlerFunctions eventHandlerFunctions, Topics topics) {
         this.repos = repos;
-        this.eventTopic = eventTopic;
+        this.topics = topics;
         this.eventHandlerFunctions = eventHandlerFunctions;
     }
 
     public Mono<Event> pushEvent(Event event) {
         Events events = repos.events();
-        R2dbcEntityTemplate entityTemplate = repos.entityTemplate();
+        Topic<Event> eventTopic = topics.eventTopic();
 
         Mono<Long> nextEventId = events.nextId().cache();
 
@@ -43,7 +43,7 @@ public class EventHandler {
                 .map(event::withId)
                 .map(evt -> evt.withNextId(-1L))
                 .zipWith(newPrevious, Event::withPreviousId)
-                .transform(Message.publish(Message.MessageType.CREATE, eventTopic))
+                .transform(Topics.create(eventTopic))
                 .cache();
 
 
@@ -51,7 +51,7 @@ public class EventHandler {
                 .filter(tail -> tail != -1L)
                 .flatMap(events::findById)
                 .zipWith(nextEventId, Event::withNextId)
-                .transform(Message.publish(Message.MessageType.UPDATE, eventTopic))
+                .transform(Topics.create(eventTopic))
                 .then();
 
 
@@ -60,7 +60,7 @@ public class EventHandler {
                 .map(Tuple2::getT2)
                 .flatMap(events::findById)
                 .zipWith(nextEventId, Event::withNextId)
-                .transform(Message.publish(Message.MessageType.UPDATE, eventTopic))
+                .transform(Topics.update(eventTopic))
                 .then();
 
         Mono<Void> updateTailPointer = nextEventId
@@ -79,6 +79,7 @@ public class EventHandler {
 
     public Mono<? extends WorldItem> popEventQueue() {
         Events events = repos.events();
+        Topic<Event> eventTopic = topics.eventTopic();
 
         Mono<Long> queueHead = events.getPointerId(Event.EventPointers.QUEUE_HEAD).cache();
         Mono<Long> current = events.getPointerId(Event.EventPointers.CURRENT).cache();
@@ -87,14 +88,14 @@ public class EventHandler {
                 .filter(head -> head != -1L)
                 .flatMap(events::findById)
                 .map(evt -> evt.withPosition(Event.EventPosition.CURRENT))
-                .transform(Message.publish(Message.MessageType.UPDATE, eventTopic))
+                .transform(Topics.update(eventTopic))
                 .cache();
 
         Mono<Void> updateCurrentPosition = current
                 .filter(id -> id != -1L)
                 .flatMap(events::findById)
                 .map(evt -> evt.withPosition(Event.EventPosition.COMPLETED))
-                .transform(Message.publish(Message.MessageType.UPDATE, eventTopic))
+                .transform(Topics.update(eventTopic))
                 .then();
 
         Mono<Void> updateHeadPointer = headEvent
@@ -119,6 +120,7 @@ public class EventHandler {
 
     public Mono<? extends WorldItem> reverseEvent() {
         Events events = repos.events();
+        Topic<Event> eventTopic = topics.eventTopic();
 
         Mono<Long> current = events.getPointerId(Event.EventPointers.CURRENT).cache();
         Mono<Long> queueTail = events.getPointerId(Event.EventPointers.QUEUE_TAIL).cache();
@@ -130,7 +132,7 @@ public class EventHandler {
 
         Mono<Void> updateCurrentEvent = currentEvent
                 .map(evt -> evt.withPosition(Event.EventPosition.FUTURE))
-                .transform(Message.publish(Message.MessageType.UPDATE, eventTopic))
+                .transform(Topics.publish(Message.MessageType.UPDATE, eventTopic))
                 .then();
 
         Mono<Void> updatePreviousEvent = currentEvent
@@ -138,7 +140,7 @@ public class EventHandler {
                 .filter(id -> id != -1L)
                 .flatMap(events::findById)
                 .map(evt -> evt.withPosition(Event.EventPosition.CURRENT))
-                .transform(Message.publish(Message.MessageType.UPDATE, eventTopic))
+                .transform(Topics.publish(Message.MessageType.UPDATE, eventTopic))
                 .then();
 
         Mono<Void> updateCurrentPointer = currentEvent
