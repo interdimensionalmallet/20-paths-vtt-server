@@ -7,7 +7,14 @@ public record Event(@Id Long id,
                     WorldItem.Type worldItemType, EventType eventType,
                     Long thingId, String thingName,
                     Long targetThingId,
-                    Long resourceId, String resourceName, Integer resourceModifier) {
+                    Long resourceId, String resourceName, Integer resourceModifier,
+                    EventPosition eventPosition) {
+
+    public enum EventPosition {
+        CURRENT,
+        FUTURE,
+        COMPLETED
+    }
 
     public enum EventPointers {
         CURRENT,
@@ -27,19 +34,19 @@ public record Event(@Id Long id,
 
 
     public static Event thingEvent(EventType eventType, Long thingId, String thingName) {
-        return new Event(null, null, null, WorldItem.Type.THING, eventType, thingId, thingName, null, null, null, null);
+        return new Event(null, null, null, WorldItem.Type.THING, eventType, thingId, thingName, null, null, null, null, EventPosition.FUTURE);
     }
 
     public static Event linkEvent(EventType eventType, Long sourceThingId, Long targetThingId) {
-        return new Event(null, null, null, WorldItem.Type.LINK, eventType, sourceThingId, null, targetThingId, null, null, null);
+        return new Event(null, null, null, WorldItem.Type.LINK, eventType, sourceThingId, null, targetThingId, null, null, null, EventPosition.FUTURE);
     }
 
     public static Event resourceEvent(EventType eventType, Long resourceId, Long thingId, String resourceName, Integer resourceModifier) {
-        return new Event(null, null, null, WorldItem.Type.RESOURCE, eventType, thingId, null, null, resourceId, resourceName, resourceModifier);
+        return new Event(null, null, null, WorldItem.Type.RESOURCE, eventType, thingId, null, null, resourceId, resourceName, resourceModifier, EventPosition.FUTURE);
     }
 
     public Event withId(Long id) {
-        return new Event(id, previousId, nextId, worldItemType, eventType, thingId, thingName, targetThingId, resourceId, resourceName, resourceModifier);
+        return new Event(id, previousId, nextId, worldItemType, eventType, thingId, thingName, targetThingId, resourceId, resourceName, resourceModifier, eventPosition);
     }
 
     public Event withNextId(Long nextId) {
@@ -51,11 +58,15 @@ public record Event(@Id Long id,
     }
 
     public Event withChains(Long previousId, Long nextId) {
-        return new Event(id, previousId, nextId, worldItemType, eventType, thingId, thingName, targetThingId, resourceId, resourceName, resourceModifier);
+        return new Event(id, previousId, nextId, worldItemType, eventType, thingId, thingName, targetThingId, resourceId, resourceName, resourceModifier, eventPosition);
+    }
+
+    public Event withPosition(EventPosition eventPosition) {
+        return new Event(id, previousId, nextId, worldItemType, eventType, thingId, thingName, targetThingId, resourceId, resourceName, resourceModifier, eventPosition);
     }
 
     public Event withIdAndChains(Long id, Long previousId, Long nextId) {
-        return new Event(id, previousId, nextId, worldItemType, eventType, thingId, thingName, targetThingId, resourceId, resourceName, resourceModifier);
+        return new Event(id, previousId, nextId, worldItemType, eventType, thingId, thingName, targetThingId, resourceId, resourceName, resourceModifier, eventPosition);
     }
 
 

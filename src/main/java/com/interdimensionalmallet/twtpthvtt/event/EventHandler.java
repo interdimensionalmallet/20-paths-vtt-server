@@ -77,11 +77,21 @@ public class EventHandler {
         Events events = repos.events();
 
         Mono<Long> queueHead = events.getPointerId(Event.EventPointers.QUEUE_HEAD).cache();
+        Mono<Long> current = events.getPointerId(Event.EventPointers.CURRENT).cache();
 
         Mono<Event> headEvent = queueHead
                 .filter(head -> head != -1L)
                 .flatMap(events::findById)
+                .map(evt -> evt.withPosition(Event.EventPosition.CURRENT))
+                .flatMap(repos.entityTemplate()::update)
                 .cache();
+
+        Mono<Void> updateCurrentPosition = current
+                .filter(id -> id != -1L)
+                .flatMap(events::findById)
+                .map(evt -> evt.withPosition(Event.EventPosition.COMPLETED))
+                .flatMap(repos.entityTemplate()::update)
+                .then();
 
         Mono<Void> updateHeadPointer = headEvent
                 .map(Event::nextId)
@@ -98,7 +108,7 @@ public class EventHandler {
 
 
 
-        return Mono.when(updateHeadPointer, updateTailPointer, updateCurrentPointer)
+        return Mono.when(updateHeadPointer, updateTailPointer, updateCurrentPointer, updateCurrentPosition)
                 .then(headEvent)
                 .flatMap(evt -> eventHandlerFunctions.getHandlerFunction(evt, Event.EventDirection.FORWARD).apply(evt));
     }
