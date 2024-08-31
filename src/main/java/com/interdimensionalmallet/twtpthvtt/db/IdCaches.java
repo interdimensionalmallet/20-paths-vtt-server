@@ -1,6 +1,7 @@
 package com.interdimensionalmallet.twtpthvtt.db;
 
 import com.interdimensionalmallet.twtpthvtt.model.*;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;

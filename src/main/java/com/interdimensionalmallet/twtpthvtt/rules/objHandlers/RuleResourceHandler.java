@@ -4,8 +4,10 @@ import com.interdimensionalmallet.twtpthvtt.db.Repos;
 import com.interdimensionalmallet.twtpthvtt.model.Message;
 import com.interdimensionalmallet.twtpthvtt.model.Resource;
 import com.interdimensionalmallet.twtpthvtt.topics.Topics;
+import org.flywaydb.core.Flyway;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.rule.FactHandle;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ConcurrentHashMap;

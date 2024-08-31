@@ -7,6 +7,7 @@ dialect "mvel";
 rule "Start Movement Query"
     when
         $thing: Thing()
-        $resource: Resource(thingId == $thing.id, )
+        $resource: Resource(thingId == $thing.id)
     then
+        System.out.println("Start Movement Query");
 end

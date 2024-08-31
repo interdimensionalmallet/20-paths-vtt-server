@@ -1,10 +1,12 @@
 package com.interdimensionalmallet.twtpthvtt.db;
 
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Component;
 
 @Component
+@DependsOn("flywayMigrateComplete")
 public class Repos {
 
     private final Things things;

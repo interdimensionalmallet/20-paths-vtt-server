@@ -6,9 +6,11 @@ import com.interdimensionalmallet.twtpthvtt.model.Thing;
 import com.interdimensionalmallet.twtpthvtt.topics.Topics;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.rule.FactHandle;
+import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+@Component
 public class RuleThingHandler implements RuleHandler {
     private final KieSession kieSession;
     private final ConcurrentHashMap<Long, FactHandle> thingHandles = new ConcurrentHashMap<>();
