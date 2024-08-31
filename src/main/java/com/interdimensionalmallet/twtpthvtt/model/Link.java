@@ -11,6 +11,10 @@ public record Link(Long sourceThingId, Long targetThingId) implements WorldItem 
         }
     }
 
+    public LinkId id() {
+        return new LinkId(sourceThingId, targetThingId);
+    }
+
     public Link reverse() {
         return new Link(targetThingId, sourceThingId);
     }

@@ -4,17 +4,9 @@ import com.interdimensionalmallet.twtpthvtt.model.*;
 
 dialect "mvel";
 
-rule "Movement - Select Movement Direction"
+rule "Start Movement Query"
     when
         $thing: Thing()
-        $resource: Resource(thingId == $thing.id, name == "movement_spaces", count > 0)
-        $link: Link(sourceThingId == $thing.id)
-        $currentTerrain: Thing(id == $link.targetThingId)
-        $currentTerrainResource: Resource(thingId == $currentTerrain.id, name == "tag:terrain")
-        $currentTerrainLink: Link(sourceThingId == $currentTerrain.id)
-        $otherTerrain: Thing(id == $currentTerrainLink.targetThingId)
-        $otherTerrainResource: Resource(thingId == $otherTerrain.id, name == "tag:terrain")
+        $resource: Resource(thingId == $thing.id, )
     then
-        System.out.println("Movement - Select Movement Direction");
-        
 end
