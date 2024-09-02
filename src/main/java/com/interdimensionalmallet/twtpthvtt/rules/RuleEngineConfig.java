@@ -1,5 +1,6 @@
 package com.interdimensionalmallet.twtpthvtt.rules;
 
+import com.interdimensionalmallet.twtpthvtt.topics.Topic;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
@@ -59,8 +60,9 @@ public class RuleEngineConfig {
         return KieServices.Factory.get().newKieContainer(kb.getKieModule().getReleaseId());
    }
 
-   @Bean
+    @Bean
     public KieSession createSession(KieContainer kieContainer) {
         return kieContainer.newKieSession();
     }
+
 }

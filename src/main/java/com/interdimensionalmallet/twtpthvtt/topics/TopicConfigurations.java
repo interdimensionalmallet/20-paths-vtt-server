@@ -1,6 +1,7 @@
 package com.interdimensionalmallet.twtpthvtt.topics;
 
 import com.interdimensionalmallet.twtpthvtt.model.*;
+import org.kie.api.runtime.rule.FactHandle;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import reactor.core.publisher.Sinks;
@@ -56,6 +57,11 @@ public class TopicConfigurations {
     @Bean
     public Topic<QueryOption> queryOptionTopic() {
         return new SinkWrapper<>(QueryOption.class, Sinks.many().multicast().onBackpressureBuffer());
+    }
+
+    @Bean
+    public Topic<FactHandle> factsUpdatedTopic() {
+        return new SinkWrapper<>(FactHandle.class, Sinks.many().multicast().onBackpressureBuffer());
     }
 
 }

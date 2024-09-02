@@ -2,7 +2,7 @@ package com.interdimensionalmallet.twtpthvtt.model;
 
 import org.springframework.data.annotation.Id;
 
-public record Resource(@Id Long id, Long thingId, String name, Integer count, Boolean deleted) implements WorldItem {
+public record Resource(@Id Long id, Long thingId, String name, Integer count, Boolean deleted) implements WorldItem, Item {
     public Resource {
         if (thingId == null) {
             throw new IllegalArgumentException("thingId cannot be null");

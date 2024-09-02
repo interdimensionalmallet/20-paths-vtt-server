@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-public class RuleLinkHandler implements RuleHandler {
+public class RuleLinkHandler {
 
     private final KieSession kieSession;
     private final ConcurrentHashMap<LinkId, FactHandle> factHandles = new ConcurrentHashMap<>();

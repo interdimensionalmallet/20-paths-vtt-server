@@ -1,10 +1,10 @@
 package com.interdimensionalmallet.twtpthvtt.topics;
 
 import com.interdimensionalmallet.twtpthvtt.model.*;
+import org.kie.api.runtime.rule.FactHandle;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
 
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -17,7 +17,8 @@ public record Topics(
         Topic<Link> linkTopic,
         Topic<WorldItem> worldItemTopic,
         Topic<Query> queryTopic,
-        Topic<QueryOption> queryOptionTopic
+        Topic<QueryOption> queryOptionTopic,
+        Topic<FactHandle> factsUpdatedTopic
 ) {
 
     public static <E> Function<Mono<E>, Mono<E>> create(Topic<E> topic) {
@@ -56,7 +57,7 @@ public record Topics(
                 .map(Message::payload);
     }
 
-    public Stream<Topic<?>> allTopics() {
+    public Stream<Topic<?>> entityTopics() {
         return Stream.of(
                 eventTopic,
                 thingTopic,

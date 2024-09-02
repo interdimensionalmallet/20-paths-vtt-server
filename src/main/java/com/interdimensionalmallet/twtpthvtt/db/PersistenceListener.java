@@ -2,7 +2,6 @@ package com.interdimensionalmallet.twtpthvtt.db;
 
 import com.interdimensionalmallet.twtpthvtt.model.Link;
 import com.interdimensionalmallet.twtpthvtt.model.Message;
-import com.interdimensionalmallet.twtpthvtt.model.WorldItem;
 import com.interdimensionalmallet.twtpthvtt.topics.Topics;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -15,7 +14,7 @@ public class PersistenceListener {
 
     public PersistenceListener(Repos repos, Topics topics) {
         this.repos = repos;
-        topics.allTopics()
+        topics.entityTopics()
                 .filter(topic -> topic.type() != Link.class)
                 .map(topic -> topic.asFlux().flatMap(this::persistItem))
                 .forEach(Flux::subscribe);
