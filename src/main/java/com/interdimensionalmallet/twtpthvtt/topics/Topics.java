@@ -2,11 +2,15 @@ package com.interdimensionalmallet.twtpthvtt.topics;
 
 import com.interdimensionalmallet.twtpthvtt.model.*;
 import org.kie.api.runtime.rule.FactHandle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.SignalType;
 
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 
 @Component
@@ -20,6 +24,8 @@ public record Topics(
         Topic<QueryOption> queryOptionTopic,
         Topic<FactHandle> factsUpdatedTopic
 ) {
+
+    private static final Logger LOG = LoggerFactory.getLogger(Topics.class);
 
     public static <E> Function<Mono<E>, Mono<E>> create(Topic<E> topic) {
         return publish(Message.MessageType.CREATE, topic);
@@ -47,12 +53,14 @@ public record Topics(
 
     public static <E> Function<Mono<E>, Mono<E>> publish(Message.MessageType type, Topic<E> topic) {
         return mono -> mono.map(e -> new Message<>(type, e))
+                .doOnNext(msg -> LOG.debug("Publishing message: {}", msg))
                 .doOnNext(topic::tryEmitNext)
                 .map(Message::payload);
     }
 
     public static <E> Function<Flux<E>, Flux<E>> publishMany(Message.MessageType type, Topic<E> topic) {
         return flux -> flux.map(e -> new Message<>(type, e))
+                .doOnNext(msg -> LOG.debug("Publishing message many: {}", msg))
                 .doOnNext(topic::tryEmitNext)
                 .map(Message::payload);
     }
@@ -63,17 +71,8 @@ public record Topics(
                 thingTopic,
                 resourceTopic,
                 linkTopic,
-                worldItemTopic,
                 queryTopic,
                 queryOptionTopic
-        );
-    }
-
-    public Stream<Topic<? extends WorldItem>> worldItemTopics() {
-        return Stream.of(
-                thingTopic,
-                resourceTopic,
-                linkTopic
         );
     }
 

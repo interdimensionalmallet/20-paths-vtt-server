@@ -11,6 +11,8 @@ import org.kie.api.event.rule.ObjectUpdatedEvent;
 import org.kie.api.event.rule.RuleRuntimeEventListener;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.rule.FactHandle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
@@ -21,6 +23,8 @@ import java.util.function.Predicate;
 
 @Component
 public class RuleEngine {
+
+    private static final Logger LOG = LoggerFactory.getLogger(RuleEngine.class);
 
     private final KieSession kieSession;
     private final IdCaches idCaches;
@@ -65,10 +69,9 @@ public class RuleEngine {
 
         topics.factsUpdatedTopic().asFlux()
                 .windowTimeout(Integer.MAX_VALUE, Duration.ofSeconds(5))
-                .doOnNext(window -> System.out.println("windowed released"))
                 .flatMap(Flux::collectList)
-                .doOnNext(list -> System.out.println("windowed collected: " + list))
                 .filter(Predicate.not(List::isEmpty))
+                .doOnNext(list -> LOG.debug("Stepping rules for {}", list))
                 .subscribe(this::stepSubscribe);
     }
 

@@ -3,6 +3,8 @@ package com.interdimensionalmallet.twtpthvtt.db;
 import com.interdimensionalmallet.twtpthvtt.model.Link;
 import com.interdimensionalmallet.twtpthvtt.model.Message;
 import com.interdimensionalmallet.twtpthvtt.topics.Topics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -10,6 +12,7 @@ import reactor.core.publisher.Mono;
 @Component
 public class PersistenceListener {
 
+    private static final Logger LOG = LoggerFactory.getLogger(PersistenceListener.class);
     private final Repos repos;
 
     public PersistenceListener(Repos repos, Topics topics) {
@@ -22,6 +25,7 @@ public class PersistenceListener {
     }
 
     public Mono<Link> persistLink(Message<Link> linkMessage) {
+        LOG.debug("Persisting link: {}", linkMessage);
         return switch (linkMessage.type()) {
             case CREATE -> repos.entityTemplate().insert(linkMessage.payload());
             case DELETE -> repos.links()
@@ -35,6 +39,7 @@ public class PersistenceListener {
     }
 
     public <T> Mono<T> persistItem(Message<T> itemMessage) {
+        LOG.debug("Persisting item: {}", itemMessage);
         return switch (itemMessage.type()) {
             case CREATE -> repos.entityTemplate().insert(itemMessage.payload());
             case UPDATE -> repos.entityTemplate().update(itemMessage.payload());

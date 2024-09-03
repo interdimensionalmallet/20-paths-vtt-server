@@ -51,7 +51,7 @@ public class EventHandler {
                 .filter(tail -> tail != -1L)
                 .flatMap(events::findById)
                 .zipWith(nextEventId, Event::withNextId)
-                .transform(Topics.create(eventTopic))
+                .transform(Topics.update(eventTopic))
                 .then();
 
 
@@ -84,37 +84,35 @@ public class EventHandler {
         Mono<Long> queueHead = events.getPointerId(Event.EventPointers.QUEUE_HEAD).cache();
         Mono<Long> current = events.getPointerId(Event.EventPointers.CURRENT).cache();
 
-        Mono<Event> headEvent = queueHead
+        Mono<Event> updateEventCurrentToCompleted = current
+                .filter(id -> id != -1L)
+                .flatMap(events::findById)
+                .map(evt -> evt.withPosition(Event.EventPosition.COMPLETED))
+                .transform(Topics.update(eventTopic));
+
+        Mono<Event> updateHeadEventToCurrent = queueHead
                 .filter(head -> head != -1L)
                 .flatMap(events::findById)
                 .map(evt -> evt.withPosition(Event.EventPosition.CURRENT))
                 .transform(Topics.update(eventTopic))
                 .cache();
 
-        Mono<Void> updateCurrentPosition = current
-                .filter(id -> id != -1L)
-                .flatMap(events::findById)
-                .map(evt -> evt.withPosition(Event.EventPosition.COMPLETED))
-                .transform(Topics.update(eventTopic))
-                .then();
-
-        Mono<Void> updateHeadPointer = headEvent
+        Mono<Void> updateHeadPointer = updateHeadEventToCurrent
                 .map(Event::nextId)
                 .flatMap(id -> events.setPointerId(Event.EventPointers.QUEUE_HEAD, id));
 
-        Mono<Void> updateTailPointer = headEvent
+        Mono<Void> clearTailPointer = updateHeadEventToCurrent
                 .map(Event::nextId)
                 .filter(id -> id == -1L)
                 .flatMap(id -> events.setPointerId(Event.EventPointers.QUEUE_TAIL, id));
 
-        Mono<Void> updateCurrentPointer = headEvent
+        Mono<Void> updateCurrentPointer = updateHeadEventToCurrent
                 .map(Event::id)
                 .flatMap(id -> events.setPointerId(Event.EventPointers.CURRENT, id));
 
 
-
-        return Mono.when(updateHeadPointer, updateTailPointer, updateCurrentPointer, updateCurrentPosition)
-                .then(headEvent)
+        return updateEventCurrentToCompleted.then(updateHeadEventToCurrent).then(Mono.when(updateHeadPointer, clearTailPointer, updateCurrentPointer))
+                .then(updateHeadEventToCurrent)
                 .flatMap(evt -> eventHandlerFunctions.getHandlerFunction(evt, Event.EventDirection.FORWARD).apply(evt));
     }
 

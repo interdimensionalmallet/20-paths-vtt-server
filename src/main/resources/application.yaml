@@ -11,3 +11,6 @@ spring:
     url: jdbc:h2:file:./dataStore/mydb
     user: sa
     password:
+logging:
+  level:
+    com.interdimensionalmallet.twtpthvtt: DEBUG
