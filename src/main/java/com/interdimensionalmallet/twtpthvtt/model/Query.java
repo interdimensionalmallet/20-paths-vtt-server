@@ -16,4 +16,9 @@ public record Query(Long id, String queryName, Long targetId, Long selectedOptio
         return new Query(id, queryName, targetId, selectedOptionId, deleted);
     }
 
+    //Adding to help Drools
+    public Long getSelectedOptionId() {
+        return selectedOptionId;
+    }
+
 }

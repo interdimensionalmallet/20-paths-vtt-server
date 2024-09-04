@@ -26,5 +26,10 @@ public record Resource(@Id Long id, Long thingId, String name, Integer count, Bo
     public Resource withModifier(Integer modifier) {
         return new Resource(id, thingId, name, count + modifier, deleted);
     }
+
+    //Adding to help Drools
+    public Integer getCount() {
+        return count;
+    }
     
 }

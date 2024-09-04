@@ -16,4 +16,9 @@ public record Thing(@Id Long id, String name, Boolean deleted) implements WorldI
         return WorldItem.Type.THING;
     }
 
+    //Adding to help Drools
+    public String getName() {
+        return name;
+    }
+
 }

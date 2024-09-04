@@ -1,13 +1,15 @@
 package rules.movement;
 
 import com.interdimensionalmallet.twtpthvtt.model.*;
+import com.interdimensionalmallet.twtpthvtt.rules.ProposedEvent;
 
 dialect "mvel";
 
 rule "Start Movement Query"
     when
         $thing: Thing()
-        $resource: Resource(thingId == $thing.id)
+        $resource: Resource(thingId == $thing.id, name == "movement_spaces", count > 0)
     then
         System.out.println("Start Movement Query");
+        insert(new ProposedEvent(Event.thingEvent(Event.EventType.CREATE, idCache.nextThingId(), "Movement query thing for " + $thing.name)));
 end

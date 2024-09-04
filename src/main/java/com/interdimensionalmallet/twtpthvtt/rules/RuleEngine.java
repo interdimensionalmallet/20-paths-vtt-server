@@ -2,6 +2,7 @@ package com.interdimensionalmallet.twtpthvtt.rules;
 
 import com.interdimensionalmallet.twtpthvtt.db.IdCaches;
 import com.interdimensionalmallet.twtpthvtt.db.Repos;
+import com.interdimensionalmallet.twtpthvtt.event.EventHandler;
 import com.interdimensionalmallet.twtpthvtt.model.Message;
 import com.interdimensionalmallet.twtpthvtt.topics.Topics;
 import jakarta.annotation.PostConstruct;
@@ -29,11 +30,13 @@ public class RuleEngine {
     private final KieSession kieSession;
     private final IdCaches idCaches;
     private final Topics topics;
+    private final EventHandler eventHandler;
 
-    public RuleEngine(KieSession kieSession, Topics topics, IdCaches idCaches) {
+    public RuleEngine(KieSession kieSession, Topics topics, IdCaches idCaches, EventHandler eventHandler) {
         this.kieSession = kieSession;
         this.topics = topics;
         this.idCaches = idCaches;
+        this.eventHandler = eventHandler;
     }
 
     @PostConstruct
@@ -63,9 +66,9 @@ public class RuleEngine {
                 .map(FactHandle::getObject)
                 .cast(ProposedEvent.class)
                 .map(ProposedEvent::event)
-                .map(event -> event.withId(idCaches.nextEventId()))
-                .map(evt -> new Message<>(Message.MessageType.CREATE, evt))
-                .subscribe(topics.eventTopic()::tryEmitNext);
+                .doOnNext(evt -> LOG.debug("Pushing event {}", evt))
+                .flatMap(eventHandler::pushEvent)
+                .subscribe();
 
         topics.factsUpdatedTopic().asFlux()
                 .windowTimeout(Integer.MAX_VALUE, Duration.ofSeconds(5))

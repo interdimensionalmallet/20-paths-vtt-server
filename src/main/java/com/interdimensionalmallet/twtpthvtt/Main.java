@@ -33,7 +33,7 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         Hooks.onOperatorDebug();
-        deleteDirectory(Path.of("dataStore"));
+        //deleteDirectory(Path.of("dataStore"));
 
         SpringApplication.run(Main.class, args);
     }
