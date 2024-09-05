@@ -1,5 +1,6 @@
 package com.interdimensionalmallet.twtpthvtt.rules;
 
+import com.interdimensionalmallet.twtpthvtt.db.IdCaches;
 import com.interdimensionalmallet.twtpthvtt.topics.Topic;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
@@ -61,8 +62,10 @@ public class RuleEngineConfig {
    }
 
     @Bean
-    public KieSession createSession(KieContainer kieContainer) {
-        return kieContainer.newKieSession();
+    public KieSession createSession(KieContainer kieContainer, IdCaches idCaches) {
+        KieSession kieSession = kieContainer.newKieSession();
+        kieSession.setGlobal("idCaches", idCaches);
+        return kieSession;
     }
 
 }

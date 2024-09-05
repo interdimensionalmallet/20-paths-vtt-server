@@ -41,35 +41,6 @@ public class RuleEngine {
 
     @PostConstruct
     public void init() {
-        kieSession.setGlobal("idCache", idCaches);
-        Sinks.Many<FactHandle> proposals = Sinks.many().multicast().onBackpressureBuffer();
-        kieSession.addEventListener(new RuleRuntimeEventListener() {
-            @Override
-            public void objectInserted(ObjectInsertedEvent objectInsertedEvent) {
-                if (objectInsertedEvent.getObject() instanceof ProposedEvent) {
-                    proposals.tryEmitNext(objectInsertedEvent.getFactHandle());
-                }
-            }
-
-            @Override
-            public void objectUpdated(ObjectUpdatedEvent objectUpdatedEvent) {
-
-            }
-
-            @Override
-            public void objectDeleted(ObjectDeletedEvent objectDeletedEvent) {
-
-            }
-        });
-        proposals.asFlux().subscribe(kieSession::delete);
-        proposals.asFlux()
-                .map(FactHandle::getObject)
-                .cast(ProposedEvent.class)
-                .map(ProposedEvent::event)
-                .doOnNext(evt -> LOG.debug("Pushing event {}", evt))
-                .flatMap(eventHandler::pushEvent)
-                .subscribe();
-
         topics.factsUpdatedTopic().asFlux()
                 .windowTimeout(Integer.MAX_VALUE, Duration.ofSeconds(5))
                 .flatMap(Flux::collectList)
