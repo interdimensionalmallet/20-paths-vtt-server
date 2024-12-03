@@ -7,9 +7,11 @@ dialect "mvel";
 
 rule "Start Movement Query"
     when
-        $thing: Thing()
-        $resource: Resource(thingId == $thing.id, name == "movement_spaces", count > 0)
+        $resource: Resource(name == "movement_spaces", count > 0)
     then
         System.out.println("Start Movement Query");
-        insert(new ProposedEvent(Event.thingEvent(Event.EventType.CREATE, idCaches.nextThingId(), "Movement query thing for " + $thing.name)));
+        long thingId = idCaches.nextThingId();
+        insert(new ProposedEvent(Event.thingEvent(Event.EventType.CREATE, thingId, "Movement query thing")));
+        insert(new ProposedEvent(Event.resourceEvent(Event.EventType.CREATE, idCaches.nextResourceId(), thingId, "movement_query", 1)));
+        insert(new ProposedEvent(Event.linkEvent(Event.EventType.CREATE,  thingId, $resource.thingId)));
 end
